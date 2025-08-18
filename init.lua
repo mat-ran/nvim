@@ -173,9 +173,6 @@ vim.o.confirm = true
 --  See `:help hlsearch`
 vim.keymap.set('n', '<Esc>', '<cmd>nohlsearch<CR>')
 
--- Diagnostic keymaps
-vim.keymap.set('n', '<leader>q', vim.diagnostic.setloclist, { desc = 'Open diagnostic [Q]uickfix list' })
-
 -- Exit terminal mode in the builtin terminal with a shortcut that is a bit easier
 -- for people to discover. Otherwise, you normally need to press <C-\><C-n>, which
 -- is not what someone will guess without a bit more experience.
@@ -209,6 +206,10 @@ vim.keymap.set('t', '<Esc><Esc>', '<C-\\><C-n>', { desc = 'Exit terminal mode' }
 ---- keymaps
 vim.keymap.set('n', '<leader>e', vim.cmd.Ex, { desc = 'Open file explorer' })
 vim.keymap.set('x', '<leader>p', '"_dP', { desc = 'Paste without replacing the default register' })
+
+-- Quick code actions / quickfixes
+vim.keymap.set('n', '<leader>ca', vim.lsp.buf.code_action, { desc = '[C]ode [A]ctions / Quickfixes' })
+vim.keymap.set('x', '<leader>ca', vim.lsp.buf.code_action, { desc = '[C]ode [A]ctions / Quickfixes' })
 
 -- Przesuwanie linii w dół (Alt+j) oraz w górę (Alt+k) w trybie normalnym i wizualnym
 vim.keymap.set('n', '<A-j>', ':m .+1<CR>==', { noremap = true, silent = true })
@@ -366,27 +367,10 @@ require('lazy').setup({
       },
       {
         'nvim-telescope/telescope-ui-select.nvim',
-        config = function()
-          local actions = require 'telescope.actions'
-          require('telescope').setup {
-            defaults = {
-              mappings = {
-                i = {
-                  ['<C-j>'] = actions.move_selection_next, -- Ctrl+j: następny
-                  ['<C-k>'] = actions.move_selection_previous, -- Ctrl+k: poprzedni
-                },
-                n = {
-                  ['<C-j>'] = actions.move_selection_next,
-                  ['<C-k>'] = actions.move_selection_previous,
-                },
-              },
-            },
-          }
-        end,
       },
 
       -- Useful for getting pretty icons, but requires a Nerd Font.
-      { 'nvim-tree/nvim-web-devicons', enabled = vim.g.have_nerd_font },
+      { 'nvim-tree/nvim-web-devicons', enabled = true },
     },
     config = function()
       -- Telescope is a fuzzy finder that comes with a lot of different things that
@@ -581,6 +565,16 @@ require('lazy').setup({
           --  the definition of its *type*, not where it was *defined*.
           map('grt', require('telescope.builtin').lsp_type_definitions, '[G]oto [T]ype Definition')
 
+          -- [[ Custom Commands ]]
+          vim.api.nvim_create_user_command('OR', function()
+            vim.lsp.buf.code_action {
+              context = {
+                only = { 'source.organizeImports' },
+              },
+              apply = true,
+            }
+          end, { desc = 'Organize Imports' })
+
           -- This function resolves a difference between neovim nightly (version 0.11) and stable (version 0.10)
           ---@param client vim.lsp.Client
           ---@param method vim.lsp.protocol.Method
@@ -710,6 +704,14 @@ require('lazy').setup({
         vtsls = {
           settings = {
             vtsls = {
+              enableMoveToFileCodeAction = true,
+              autoUseWorkspaceTsdk = true,
+              experimental = {
+                maxInlayHintLength = 30,
+                completion = {
+                  enableServerSideFuzzyMatch = true,
+                },
+              },
               tsserver = {
                 globalPlugins = {
                   {
@@ -779,22 +781,22 @@ require('lazy').setup({
     },
     opts = {
       notify_on_error = false,
-      format_on_save = function(bufnr)
-        -- Disable "format_on_save lsp_fallback" for languages that don't
-        -- have a well standardized coding style. You can add additional
-        -- languages here or re-enable it for the disabled ones.
-        local disable_filetypes = { c = true, cpp = true }
-        if disable_filetypes[vim.bo[bufnr].filetype] then
-          return nil
-        else
-          return {
-            timeout_ms = 500,
-            lsp_format = 'fallback',
-          }
-        end
-      end,
       formatters_by_ft = {
         lua = { 'stylua' },
+        javascript = { 'prettierd' },
+        javascriptreact = { 'prettierd' },
+        typescript = { 'prettierd' },
+        typescriptreact = { 'prettierd' },
+        vue = { 'prettierd' },
+        html = { 'prettierd' },
+        css = { 'prettierd' },
+        scss = { 'prettierd' },
+        json = { 'prettierd' },
+        jsonc = { 'prettierd' },
+        markdown = { 'prettierd' },
+        yaml = { 'prettierd' },
+        bash = { 'shfmt' },
+        sh = { 'shfmt' },
         -- Conform can also run multiple formatters sequentially
         -- python = { "isort", "black" },
         --
@@ -884,6 +886,11 @@ require('lazy').setup({
         -- By default, you may press `<c-space>` to show the documentation.
         -- Optionally, set `auto_show = true` to show the documentation after a delay.
         documentation = { auto_show = true, auto_show_delay_ms = 700 },
+        accept = {
+          auto_brackets = {
+            enabled = false,
+          },
+        },
       },
 
       sources = {
