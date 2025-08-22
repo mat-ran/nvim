@@ -771,16 +771,56 @@ require('lazy').setup({
     cmd = { 'ConformInfo' },
     keys = {
       {
-        '<leader>f',
+        '<leader>fb',
         function()
           require('conform').format { async = true, lsp_format = 'fallback' }
         end,
         mode = '',
-        desc = '[F]ormat buffer',
+        desc = '[f]ormat [b]uffer',
+      },
+      {
+        '<leader>fh',
+        function()
+          local ok_gs, gitsigns = pcall(require, 'gitsigns')
+          if not ok_gs or type(gitsigns.get_hunks) ~= 'function' then
+            -- Brak gitsigns lub brak API z hunkami -> nic nie robimy, żeby nie sformatować całego pliku
+            return
+          end
+
+          local bufnr = vim.api.nvim_get_current_buf()
+          local ok_hunks, hunks = pcall(gitsigns.get_hunks, bufnr)
+          if not ok_hunks or not hunks or vim.tbl_isempty(hunks) then
+            return
+          end
+
+          local conform = require 'conform'
+
+          -- Przejdź po hunkach i formatuj tylko dodane/zmienione linie
+          for _, h in ipairs(hunks) do
+            -- gitsigns różnie nazywa pola w zależności od wersji; spróbujmy kilku wariantów
+            local start_line = (h.added and h.added.start) or h.addstart or (h.add and h.add.start)
+            local count = (h.added and h.added.count) or h.addcount or (h.add and h.add.count) or 0
+
+            -- Pomijamy hunki usunięte (count == 0 oznacza brak dodanych linii)
+            if start_line and count > 0 then
+              -- conform oczekuje end jako ekskluzywnego końca (następna linia po zakresie)
+              local range_end = start_line + count
+              conform.format {
+                async = false,
+                lsp_format = 'never', -- ważne: bez fallbacku, żeby nie sformatować całego pliku
+                range = {
+                  start = { start_line, 0 },
+                  ['end'] = { range_end, 0 },
+                },
+              }
+            end
+          end
+        end,
+        mode = 'n',
+        desc = '[f]ormat [h]unks',
       },
     },
     opts = {
-      notify_on_error = false,
       formatters_by_ft = {
         lua = { 'stylua' },
         javascript = { 'prettierd' },
