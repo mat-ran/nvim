@@ -701,33 +701,29 @@ require('lazy').setup({
             },
           },
         },
-        vtsls = {
-          settings = {
-            vtsls = {
-              enableMoveToFileCodeAction = true,
-              autoUseWorkspaceTsdk = true,
-              experimental = {
-                maxInlayHintLength = 30,
-                completion = {
-                  enableServerSideFuzzyMatch = true,
-                },
-              },
-              tsserver = {
-                globalPlugins = {
-                  {
-                    name = '@vue/typescript-plugin',
-                    location = vim.fn.stdpath 'data' .. '/mason/packages/vue-language-server/node_modules/@vue/language-server',
-                    languages = { 'vue' },
-                    configNamespace = 'typescript',
-                  },
-                },
+        ts_ls = {
+          init_options = {
+            plugins = {
+              {
+                name = '@vue/typescript-plugin',
+                location = vim.fn.stdpath 'data' .. '/mason/packages/vue-language-server/node_modules/@vue/language-server',
+                languages = { 'vue' },
+                configNamespace = 'typescript',
               },
             },
           },
           filetypes = { 'typescript', 'javascript', 'javascriptreact', 'typescriptreact', 'vue' },
-          capabilities = capabilities,
         },
-        vue_ls = {},
+        vue_ls = {
+          settings = {
+            vue = {
+              suggest = {
+                componentNameCasing = 'preferKebabCase',
+                propNameCasing = 'preferKebabCase',
+              },
+            },
+          },
+        },
         prettierd = {},
         eslint_d = {},
         bashls = {},
