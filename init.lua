@@ -643,7 +643,7 @@ require('lazy').setup({
             [vim.diagnostic.severity.HINT] = '󰌶 ',
           },
         } or {},
-        virtual_text = {
+        virtual_lines = {
           source = 'if_many',
           spacing = 2,
           format = function(diagnostic)
@@ -656,6 +656,7 @@ require('lazy').setup({
             return diagnostic_message[diagnostic.severity]
           end,
         },
+        virtual_text = false, -- disable virtual text since it's redundant with virtual lines
       }
 
       -- LSP servers and clients are able to communicate to each other what features they support.
@@ -724,10 +725,7 @@ require('lazy').setup({
             },
           },
         },
-        prettierd = {},
-        eslint_d = {},
         bashls = {},
-        shfmt = {},
       }
 
       -- Ensure the servers and tools above are installed
@@ -746,6 +744,10 @@ require('lazy').setup({
       local ensure_installed = vim.tbl_keys(servers or {})
       vim.list_extend(ensure_installed, {
         'stylua', -- Used to format Lua code
+        'prettierd', -- Used to format JS/TS/JSON/HTML/CSS/Markdown code
+        'eslint_d', -- Used to lint JS/TS code
+        'shfmt', -- Used to format bash/sh code
+        'markdownlint', -- Used to lint markdown files
       })
       require('mason-tool-installer').setup { ensure_installed = ensure_installed }
 
@@ -1068,9 +1070,9 @@ require('lazy').setup({
   --
   -- require 'kickstart.plugins.debug',
   require 'kickstart.plugins.indent_line',
-  -- require 'kickstart.plugins.lint',
+  require 'kickstart.plugins.lint',
   require 'kickstart.plugins.autopairs',
-  require 'kickstart.plugins.neo-tree',
+  -- require 'kickstart.plugins.neo-tree',
   require 'kickstart.plugins.gitsigns', -- adds gitsigns recommend keymaps
 
   -- NOTE: The import below can automatically add your own plugins, configuration, etc from `lua/custom/plugins/*.lua`
